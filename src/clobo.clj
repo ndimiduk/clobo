@@ -14,23 +14,27 @@
 	    PathFacetHandler)))
 
 (defn disk-index
+  "Open a disk-backed index."
   [path]
   (NIOFSDirectory/getDirectory path))
 
 ;(defn memory-index
+;  "Open a memory-backed index."
 ;  []
 ;  (RAMDirectory.))
 
 (defn- index-reader
+  "Create an index reader over the specified index."
   [index]
   (IndexReader/open index true))
 
 (defn- bobo-index-reader
-  "Create a BoboIndexReader from an Index and collection of FacetHandlers"
+  "Create a BoboIndexReader from an IndexReader and collection of FacetHandlers"
   [#^IndexReader index-reader handlers]
   (BoboIndexReader/getInstance index-reader (Arrays/asList (into-array FacetHandler handlers))))
 
 (defn facet-spec
+  "Create a FacetSpec with the specified properties."
   ([] (facet-spec {}))
   ([{:keys [min-hit-count max-count expand-selection order], :as args}]
      (let [spec (FacetSpec.)]
@@ -44,19 +48,23 @@
 	 (.setOrderBy spec FacetSpec$FacetSortSpec/OrderHitsDesc))
        spec)))
 
-(defmulti facet-handler :type)
+(defmulti facet-handler :type
+  "Create a FacetHandler")
 
 (defmethod facet-handler :simple
+  "Create a SimpleFacetHandler."
   [{:keys [handler name index-field-name], :as args}]
   (if (contains? args :index-field-name)
     (SimpleFacetHandler. name index-field-name)
     (SimpleFacetHandler. name)))
 
 (defmethod facet-handler :range
+  "Create a RangeFacetHandler."
   [{:keys [handler name auto-range], :as args}]
   (RangeFacetHandler. name auto-range))
 
 (defmethod facet-handler :path
+  "Create a PathFacetHandler."
   [{:keys [handler name separator], :as args}]
   (let [p (PathFacetHandler. name)]
     (when (contains? args :separator)
@@ -64,10 +72,12 @@
     p))
 
 (defmethod facet-handler :multi-value
+  "Create a MultiValueFacetHandler."
   [{:keys [handler name], :as args}]
   (MultiValueFacetHandler. name))
 
 (defn- browse-request
+  "Create a BrowseRequest and initialize it with the specified properties."
   [query facet-map {:keys [count offset default-field],
 		    :or {count 10, offset 0, default-field "body"}}]
   (let [br (BrowseRequest.)
@@ -80,6 +90,7 @@
     br))
 
 (defn- document->map
+  "Convert a Lucene Document into a clojure map."
   [document]
   (-> (into {}
 	    (for [f (.getFields document)]
@@ -87,6 +98,7 @@
       (dissoc :_content)))
 
 (defn- browsehit->map
+  "Convert a BrowseHit into a clojure map."
   [#^BrowseHit hit]
   (into {}
 	[[:docid (.getDocid hit)]
@@ -97,6 +109,7 @@
 	 [:stored-fields (document->map (.getStoredFields hit))]]))
 
 (defn- facet-map->map
+  "Convert a facet result map into a clojure map."
   [facet-map]
   (into {}
 	(for [[name facet-list] facet-map]
@@ -105,6 +118,7 @@
 			[(.getValue facet) (.getHitCount facet)]))])))
 
 (defn- browse-result->map
+  "Convert a BrowseResult into a clojure map."
   [#^IndexReader reader #^BrowseResult result]
   (into {}
 	[[:num_hits (.getNumHits result)]
@@ -114,7 +128,8 @@
 		     (browsehit->map hit))))]
 	 [:facets (facet-map->map (.getFacetMap result))]]))
 
-(defn search
+(defn browse
+  "Browse an index, using the specified facets with the query and parameters."
   [index facet-map query params]
   (let [l-reader (index-reader index)
 	b-reader (bobo-index-reader l-reader (keys facet-map))

@@ -1,5 +1,5 @@
 (defproject clobo "0.0.1"
-  :description "FIXME: write"
+  :description "Clojure bindings for Bobo-Browse"
   :dependencies [[org.clojure/clojure "1.1.0-alpha-SNAPSHOT"]
 		 [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
 		 [com.browseengine/bobo-browse "2.0.7"]
