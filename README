@@ -1,10 +1,11 @@
 # clobo
 
-FIXME: write description
+Clojure bindings for bobo-browse. Specify query and facets as data structures
+and iterate through results as a simple map.
 
 ## Usage
 
-FIXME: write
+See the test for an example of browsing an index.
 
 ## Installation
 
