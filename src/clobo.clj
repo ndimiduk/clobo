@@ -48,23 +48,24 @@
 	 (.setOrderBy spec FacetSpec$FacetSortSpec/OrderHitsDesc))
        spec)))
 
-(defmulti facet-handler :type
-  "Create a FacetHandler")
+(defmulti facet-handler
+  "Create a FacetHandler"
+  :type)
+
+(defmethod facet-handler :default
+  [] (throw (IllegalArgumentException. "Must specfy a FacetHandler type")))
 
 (defmethod facet-handler :simple
-  "Create a SimpleFacetHandler."
   [{:keys [handler name index-field-name], :as args}]
   (if (contains? args :index-field-name)
     (SimpleFacetHandler. name index-field-name)
     (SimpleFacetHandler. name)))
 
 (defmethod facet-handler :range
-  "Create a RangeFacetHandler."
   [{:keys [handler name auto-range], :as args}]
   (RangeFacetHandler. name auto-range))
 
 (defmethod facet-handler :path
-  "Create a PathFacetHandler."
   [{:keys [handler name separator], :as args}]
   (let [p (PathFacetHandler. name)]
     (when (contains? args :separator)
@@ -72,7 +73,6 @@
     p))
 
 (defmethod facet-handler :multi-value
-  "Create a MultiValueFacetHandler."
   [{:keys [handler name], :as args}]
   (MultiValueFacetHandler. name))
 
