@@ -2,8 +2,8 @@
   :description "Clojure bindings for Bobo-Browse"
   :repositories {"javax" "http://repository.jboss.com/maven2",
 		 "jmx" "http://simile.mit.edu/maven"}
-  :dependencies [[org.clojure/clojure "1.1.0-alpha-SNAPSHOT"]
-		 [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
+  :dependencies [[org.clojure/clojure "1.1.0"]
+		 [org.clojure/clojure-contrib "1.1.0"]
 		 [log4j "1.2.15" :exclusions [javax.mail/mail
 					      javax.jms/jms
 					      com.sun.jdmk/jmxtools
