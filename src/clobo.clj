@@ -104,18 +104,20 @@
 	[[:docid (.getDocid hit)]
 	 [:fields (into {}
 			(for [[name values] (.getFieldValues hit)]
-			  [name (seq values)]))]
+			  [name (first (seq values))]))]
 	 [:score (.getScore hit)]
 	 [:stored-fields (document->map (.getStoredFields hit))]]))
 
 (defn- facet-map->map
   "Convert a facet result map into a clojure map."
   [facet-map]
-  (into {}
+  (into []
 	(for [[name facet-list] facet-map]
-	  [name (into {}
-		      (for [facet (.getFacets facet-list)]
-			[(.getValue facet) (.getHitCount facet)]))])))
+	  {"facet" name
+	   "values" (into []
+			  (for [facet (.getFacets facet-list)]
+			    {"value" (.getValue facet)
+			     "count" (.getHitCount facet)}))})))
 
 (defn- browse-result->map
   "Convert a BrowseResult into a clojure map."
