@@ -37,7 +37,7 @@
 	query "mp3"
 	params {:default-field "contents"}
 	result (browse idx facet-map query params)]
-    (is (= (:num_hits result) 2967))
+    (is (= (:num-hits result) 2967))
     (is (= (count (:hits result)) 10))
     (is (= (count (:facets result)) 8))))
 

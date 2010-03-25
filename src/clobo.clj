@@ -78,13 +78,15 @@
 
 (defn- browse-request
   "Create a BrowseRequest and initialize it with the specified properties."
-  [query facet-map {:keys [count offset default-field],
-		    :or {count 10, offset 0, default-field "body"}}]
-  (let [br (BrowseRequest.)
-	q (QueryParser. default-field (StandardAnalyzer.))]
-    (.setCount br count)
-    (.setOffset br offset)
-    (.setQuery br (. q parse query))
+  [query facet-map {:keys [count offset default-field fetch-stored-fields],
+		    :or {count 10, offset 0, default-field "body",
+			 fetch-stored-fields true}}]
+  (let [q (QueryParser. default-field (StandardAnalyzer.))
+	br (doto (BrowseRequest.)
+	     (.setFetchStoredFields fetch-stored-fields)
+	     (.setCount count)
+	     (.setOffset offset)
+	     (.setQuery (. q parse query)))]
     (doall (for [[handler spec] facet-map]
 	     (.setFacetSpec br (.getName handler) spec)))
     br))
@@ -92,21 +94,22 @@
 (defn- document->map
   "Convert a Lucene Document into a clojure map."
   [document]
-  (-> (into {}
-	    (for [f (.getFields document)]
-	      [(keyword (.name f)) (.stringValue f)]))
-      (dissoc :_content)))
+  (if (nil? document)
+    {}
+    (-> (into {}
+	      (for [f (.getFields document)]
+		[(keyword (.name f)) (.stringValue f)]))
+	(dissoc :_content))))
 
 (defn- browsehit->map
   "Convert a BrowseHit into a clojure map."
   [#^BrowseHit hit]
   (into {}
 	[[:docid (.getDocid hit)]
-	 [:fields (into {}
+	 [:fields (into (document->map (.getStoredFields hit))
 			(for [[name values] (.getFieldValues hit)]
 			  [name (first (seq values))]))]
-	 [:score (.getScore hit)]
-	 [:stored-fields (document->map (.getStoredFields hit))]]))
+	 [:score (.getScore hit)]]))
 
 (defn- facet-map->map
   "Convert a facet result map into a clojure map."
@@ -123,11 +126,9 @@
   "Convert a BrowseResult into a clojure map."
   [#^IndexReader reader #^BrowseResult result]
   (into {}
-	[[:num_hits (.getNumHits result)]
+	[[:num-hits (.getNumHits result)]
 	 [:hits (for [hit (.getHits result)]
-		  ((fn []
-		     (.setStoredFields hit (.document reader (.getDocid hit)))
-		     (browsehit->map hit))))]
+		  (browsehit->map hit))]
 	 [:facets (facet-map->map (.getFacetMap result))]]))
 
 (defn browse
